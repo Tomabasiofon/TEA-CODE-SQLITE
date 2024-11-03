@@ -164,15 +164,20 @@ def main():
     _, initial_discount_rate, _, _, _, _, _, _, _, _ = cash_flow_data
     tax_rate, *_ = cash_flow_data  # Assuming tax_rate is the first item in cash_flow_data
 
-    # Discount rate slider for dynamic updates
-    discount_rate = st.sidebar.slider(
-        "Discount Rate (%)", min_value=0.0, max_value=20.0, value=initial_discount_rate, step=0.1
-    )
+    # Sidebar header for Parameter Sensitivity
+    st.sidebar.header("Parameter Sensitivity")
 
-    # Tax rate slider for dynamic updates
-    tax_rate = st.sidebar.slider(
-        "Tax Rate (%)", min_value=0.0, max_value=50.0, value=tax_rate, step=0.5
-    )
+    # Grouped sliders for Cash Flow Rate Changes
+    with st.sidebar.expander("Cash Flow Rate Changes"):
+        # Discount rate slider for dynamic updates
+        discount_rate = st.slider(
+            "Discount Rate (%)", min_value=0.0, max_value=20.0, value=initial_discount_rate, step=0.1
+        )
+
+        # Tax rate slider for dynamic updates
+        tax_rate = st.slider(
+            "Tax Rate (%)", min_value=0.0, max_value=50.0, value=tax_rate, step=0.5
+        )
 
     # Run the discounted cash flow analysis with dynamic discount and tax rates
     try:
@@ -206,12 +211,23 @@ def main():
                 line=dict(width=line_width)
             ))
 
+        # Update layout for bold yellow horizontal line at y=0
         fig.update_layout(
             title="Cumulative NPV over Time at Different Discount Rates",
             xaxis_title="Years",
             yaxis_title="Cumulative NPV ($M)",
             legend_title="Discount Rates",
-            template="plotly_white"
+            template="plotly_white",
+            shapes=[
+                dict(
+                    type="line",
+                    x0=years.min(),
+                    x1=years.max(),
+                    y0=0,
+                    y1=0,
+                    line=dict(color="yellow", width=3)
+                )
+            ]
         )
         st.plotly_chart(fig)
 
