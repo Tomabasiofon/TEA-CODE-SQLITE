@@ -1,0 +1,19 @@
+/* styles.css */
+
+.main {
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+/* Style for right border and spacing in the sidebar */
+.css-1d391kg {  
+    border-right: 3px solid #ffffff;
+    padding-right: 15px;
+}
+
+/* Horizontal line styling */
+.sidebar-divider {
+    border-top: 1px solid #cccccc;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}

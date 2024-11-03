@@ -23,29 +23,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS to set container width to 90% of the screen width and add sidebar border and spacing
-st.markdown(
-    """
-    <style>
-    .main {
-        max-width: 90%;
-        margin: 0 auto;
-    }
-    /* Style for right border and spacing in the sidebar */
-    .css-1d391kg {  
-        border-right: 3px solid #ffffff;
-        padding-right: 15px;
-    }
-    /* Horizontal line styling */
-    .sidebar-divider {
-        border-top: 1px solid #cccccc;
-        margin-top: 15px;
-        margin-bottom: 15px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Load external CSS from file
+def load_css(css_path):
+    """Function to load and apply external CSS file."""
+    with open(css_path) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# Apply CSS from styles.css file
+load_css("css/styles.css")
 
 # Define paths
 excel_file_path = 'data/input.xlsx'
