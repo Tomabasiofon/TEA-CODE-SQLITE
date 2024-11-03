@@ -43,7 +43,7 @@ def initialize_database():
     ''')
 
     # Insert sample data or load data from your Excel files
-    # ...
+    # ...neww
 
     conn.commit()
     conn.close()
