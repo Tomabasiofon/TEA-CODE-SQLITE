@@ -14,6 +14,7 @@ from capex_calc import capex_formulae
 from opex_calc import opex_formulae
 from cash_flow_calc import cash_flow_formulae
 from discounted_cash_flow import discounted_cash_flow_analysis
+from display_data import display_default_data, display_calculated_data
 
 # Set Streamlit page configuration to wide layout
 st.set_page_config(
@@ -22,13 +23,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS to set container width to 90% of the screen width
+# Custom CSS to set container width to 90% of the screen width and add sidebar border and spacing
 st.markdown(
     """
     <style>
     .main {
         max-width: 90%;
         margin: 0 auto;
+    }
+    /* Style for right border and spacing in the sidebar */
+    .css-1d391kg {  
+        border-right: 3px solid #ffffff;
+        padding-right: 15px;
+    }
+    /* Horizontal line styling */
+    .sidebar-divider {
+        border-top: 1px solid #cccccc;
+        margin-top: 15px;
+        margin-bottom: 15px;
     }
     </style>
     """,
@@ -51,6 +63,9 @@ def main():
     """
     Main function to populate the database and retrieve data for the Streamlit dashboard.
     """
+    # Main Title
+    st.title("Techno-Economic Assessment Dashboard")
+
     # Get the last modified time of the Excel file
     excel_last_modified = get_file_last_modified_time(excel_file_path)
 
@@ -76,85 +91,11 @@ def main():
     calc_cash_flow_data = cash_flow_formulae()
     calc_capex_data = capex_formulae()
 
-    # Display the main title
-    st.title("Techno-Economic Assessment Dashboard")
+    # Display Default Data
+    display_default_data(capex_data, opex_data, electrolyser_data, cash_flow_data, pretreat_data)
 
-    # Add a horizontal line before the Default Data section
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.header("Default Data")
-    default_tab1, default_tab2, default_tab3, default_tab4, default_tab5 = st.tabs([
-        "CAPEX", "OPEX", "Electrolyser", "Cash Flow", "Pretreat"
-    ])
-    
-    with default_tab1:
-        st.subheader("CAPEX Data")
-        try:
-            st.write(capex_data)
-        except Exception as e:
-            st.error(f"Error loading CAPEX data: {e}")
-    
-    with default_tab2:
-        st.subheader("OPEX Data")
-        try:
-            st.write(opex_data)
-        except Exception as e:
-            st.error(f"Error loading OPEX data: {e}")
-    
-    with default_tab3:
-        st.subheader("Electrolyser Data")
-        try:
-            st.write(electrolyser_data)
-        except Exception as e:
-            st.error(f"Error loading Electrolyser data: {e}")
-    
-    with default_tab4:
-        st.subheader("Cash Flow Data")
-        try:
-            st.write(cash_flow_data)
-        except Exception as e:
-            st.error(f"Error loading Cash Flow data: {e}")
-    
-    with default_tab5:
-        st.subheader("Pretreat Data")
-        try:
-            st.write(pretreat_data)
-        except Exception as e:
-            st.error(f"Error loading Pretreat data: {e}")
-
-    # Add a horizontal line before the Calculated Data section
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.header("Calculated Data")
-    calc_tab1, calc_tab2, calc_tab3, calc_tab4 = st.tabs([
-        "Calculated CAPEX", "Calculated OPEX", "Calculated Electrolyser", "Calculated Cash Flow"
-    ])
-    
-    with calc_tab1:
-        st.subheader("Calculated CAPEX Data")
-        try:
-            st.write(calc_capex_data)
-        except Exception as e:
-            st.error(f"Error calculating CAPEX: {e}")
-    
-    with calc_tab2:
-        st.subheader("Calculated OPEX Data")
-        try:
-            st.write(calc_opex_data)
-        except Exception as e:
-            st.error(f"Error calculating OPEX: {e}")
-    
-    with calc_tab3:
-        st.subheader("Calculated Electrolyser Data")
-        try:
-            st.write(calc_electrolyser_data)
-        except Exception as e:
-            st.error(f"Error calculating Electrolyser data: {e}")
-    
-    with calc_tab4:
-        st.subheader("Calculated Cash Flow Data")
-        try:
-            st.write(calc_cash_flow_data)
-        except Exception as e:
-            st.error(f"Error calculating Cash Flow: {e}")
+    # Display Calculated Data
+    display_calculated_data(calc_capex_data, calc_opex_data, calc_electrolyser_data, calc_cash_flow_data)
 
     # Add a horizontal line before the Discounted Cash Flow section
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -166,6 +107,7 @@ def main():
 
     # Sidebar header for Parameter Sensitivity
     st.sidebar.header("Parameter Sensitivity")
+    st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)  # Add horizontal line after header
 
     # Grouped sliders for Cash Flow Rate Changes
     with st.sidebar.expander("Cash Flow Rate Changes"):
@@ -178,6 +120,7 @@ def main():
         tax_rate = st.slider(
             "Tax Rate (%)", min_value=0.0, max_value=50.0, value=tax_rate, step=0.5
         )
+    st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)  # Add horizontal line after expander
 
     # Run the discounted cash flow analysis with dynamic discount and tax rates
     try:
