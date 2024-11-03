@@ -15,13 +15,14 @@ from capex_calc import capex_formulae
 from opex_calc import opex_formulae
 from cash_flow_calc import cash_flow_formulae
 
-def discounted_cash_flow_analysis(discount_rate):
+def discounted_cash_flow_analysis(discount_rate, tax_rate):
     """
     Performs a discounted cash flow (DCF) analysis to assess the profitability of a project
     over its lifespan by considering revenue, costs, taxes, and discounting cash flows.
 
     Parameters:
         discount_rate (float): The discount rate to apply for NPV calculations.
+        tax_rate (float): The tax rate to apply for tax calculations.
 
     Returns:
         pd.DataFrame: A DataFrame containing calculated DCF values, including NPV and cumulative NPV.
@@ -52,9 +53,9 @@ def discounted_cash_flow_analysis(discount_rate):
         opex
     ) = opex_formulae()
 
-    # Retrieve tax rate and other financial parameters from cash_flow_input module
+    # Retrieve other financial parameters from cash_flow_input module
     (
-        tax_rate,
+        _,
         _,
         water_cost_price,
         water_selling_price,
@@ -105,9 +106,9 @@ def discounted_cash_flow_analysis(discount_rate):
         discounted_cash_flow_values['Annual Investment']
     )
 
-    # Calculate Federal Income Tax based on tax rate
+    # Calculate Federal Income Tax based on dynamic tax rate
     federal_income_tax = np.zeros(len(years))
-    federal_income_tax[2:] = (tax_rate/100) * discounted_cash_flow_values['Net Profit Before Taxes'][2:]
+    federal_income_tax[2:] = (tax_rate / 100) * discounted_cash_flow_values['Net Profit Before Taxes'][2:]
     discounted_cash_flow_values['Federal Income Tax'] = federal_income_tax
 
     # Calculate Net Profit After Taxes
@@ -127,7 +128,7 @@ def discounted_cash_flow_analysis(discount_rate):
 
     # Calculate Net Present Value (NPV) for each year using the passed-in discount rate
     discounted_cash_flow_values['Net Present Value (NPV)'] = (
-        discounted_cash_flow_values['Free Cash Flow'] / ((1 + (discount_rate/100)) ** (discounted_cash_flow_values['Year']))
+        discounted_cash_flow_values['Free Cash Flow'] / ((1 + (discount_rate / 100)) ** (discounted_cash_flow_values['Year']))
     )
 
     # Calculate Cumulative NPV
@@ -143,5 +144,8 @@ def discounted_cash_flow_analysis(discount_rate):
 
 
 if __name__ == "__main__":
-    # Example usage: Run DCF analysis with a specified discount rate
-    discounted_cash_flow_analysis(discount_rate)
+    # Example usage: Run DCF analysis with a specified discount rate and tax rate
+    discount_rate = 5.0  # Example value
+    tax_rate = 20.0  # Example value
+    dcf_result = discounted_cash_flow_analysis(discount_rate, tax_rate)
+    print(dcf_result)

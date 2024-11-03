@@ -160,12 +160,23 @@ def main():
     st.markdown("<hr>", unsafe_allow_html=True)
     st.header("Discounted Cash Flow Analysis")
 
-    # Retrieve the initial discount rate from cash_flow_data
+    # Retrieve the initial discount rate and tax rate from cash_flow_data
     _, initial_discount_rate, _, _, _, _, _, _, _, _ = cash_flow_data
+    tax_rate, *_ = cash_flow_data  # Assuming tax_rate is the first item in cash_flow_data
 
-    # Run the discounted cash flow analysis using the original discount rate
+    # Discount rate slider for dynamic updates
+    discount_rate = st.sidebar.slider(
+        "Discount Rate (%)", min_value=0.0, max_value=20.0, value=initial_discount_rate, step=0.1
+    )
+
+    # Tax rate slider for dynamic updates
+    tax_rate = st.sidebar.slider(
+        "Tax Rate (%)", min_value=0.0, max_value=50.0, value=tax_rate, step=0.5
+    )
+
+    # Run the discounted cash flow analysis with dynamic discount and tax rates
     try:
-        dcf_result = discounted_cash_flow_analysis(initial_discount_rate)
+        dcf_result = discounted_cash_flow_analysis(discount_rate, tax_rate)
         st.subheader("Discounted Cash Flow Values ($M)")
         st.dataframe(dcf_result.T)
 
@@ -173,13 +184,13 @@ def main():
         st.markdown("<hr>", unsafe_allow_html=True)
         st.subheader("Cumulative Net Present Value (NPV) Over Time at Varying Discount Rates")
 
-       # Generate a range of discount rates from -30% to +30% of the initial rate in 10% increments
-        discount_rates = [initial_discount_rate + (initial_discount_rate * i * 0.1) for i in range(-3, 4)]
+        # Generate a range of discount rates from -30% to +30% of the slider value in 10% increments
+        discount_rates = [discount_rate + (discount_rate * i * 0.1) for i in range(-3, 4)]
         cumulative_npvs = {}
         for rate in discount_rates:
             try:
-                dcf_result = discounted_cash_flow_analysis(rate)  # No division by 100 needed
-                cumulative_npvs[f"{rate:.2f}%"] = dcf_result['Cumulative NPV']  # Label as percentage without extra scaling
+                dcf_result = discounted_cash_flow_analysis(rate, tax_rate)  # Pass tax_rate to ensure dynamic updates
+                cumulative_npvs[f"{rate:.2f}%"] = dcf_result['Cumulative NPV']
             except Exception as e:
                 st.error(f"Error calculating DCF at {rate:.2f}% discount rate: {e}")
                 continue
@@ -188,10 +199,10 @@ def main():
         fig = go.Figure()
         years = dcf_result['Year']
         for rate_label, npv in cumulative_npvs.items():
-            line_width = 4 if rate_label == f"{initial_discount_rate:.2f}%" else 2
+            line_width = 4 if rate_label == f"{discount_rate:.2f}%" else 2
             fig.add_trace(go.Scatter(
-                x=years, y=npv, mode='lines', 
-                name=f"<b>{rate_label} (Original)</b>" if line_width == 4 else rate_label,
+                x=years, y=npv, mode='lines',
+                name=f"<b>{rate_label} (Current)</b>" if line_width == 4 else rate_label,
                 line=dict(width=line_width)
             ))
 
@@ -203,7 +214,6 @@ def main():
             template="plotly_white"
         )
         st.plotly_chart(fig)
-
 
     except Exception as e:
         st.error(f"Error calculating Discounted Cash Flow Analysis: {e}")
