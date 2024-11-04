@@ -23,14 +23,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Load external CSS from file
+# Function to load custom CSS
 def load_css(css_path):
-    """Function to load and apply external CSS file."""
+    """Loads a CSS file for custom styling."""
     with open(css_path) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-# Apply CSS from styles.css file
-load_css("css/styles.css")
+# Load custom CSS for styling
+css_path = "css/styles.css"
+load_css(css_path)
 
 # Define paths
 excel_file_path = 'data/input.xlsx'
@@ -71,24 +72,10 @@ def main():
     electrolyser_data = get_electrolyser_data()
     cash_flow_data = get_cash_flow_data()
     pretreat_data = get_pretreat_equipment_cost_data()
-    calc_electrolyser_data = electrolyser_formulae()
-    calc_opex_data = opex_formulae()
-    calc_cash_flow_data = cash_flow_formulae()
-    calc_capex_data = capex_formulae()
-
-    # Display Default Data
-    display_default_data(capex_data, opex_data, electrolyser_data, cash_flow_data, pretreat_data)
-
-    # Display Calculated Data
-    display_calculated_data(calc_capex_data, calc_opex_data, calc_electrolyser_data, calc_cash_flow_data)
-
-    # Add a horizontal line before the Discounted Cash Flow section
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.header("Discounted Cash Flow Analysis")
-
-    # Retrieve the initial discount rate and tax rate from cash_flow_data
-    _, initial_discount_rate, _, _, _, _, _, _, _, _ = cash_flow_data
-    tax_rate, *_ = cash_flow_data  # Assuming tax_rate is the first item in cash_flow_data
+    
+    # Retrieve initial values for dynamic adjustments
+    _, initial_discount_rate, _, water_selling_price, *_ = cash_flow_data
+    tax_rate = cash_flow_data[0]  # Assuming tax_rate is the first item in cash_flow_data
 
     # Sidebar header for Parameter Sensitivity
     st.sidebar.header("Parameter Sensitivity")
@@ -107,9 +94,39 @@ def main():
         )
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)  # Add horizontal line after expander
 
-    # Run the discounted cash flow analysis with dynamic discount and tax rates
+    # Grouped slider for Economy of Scale Changes
+    with st.sidebar.expander("Economy of Scale Changes"):
+        # Water price slider for dynamic updates
+        water_price = st.slider(
+            "Water Selling Price ($/Gal)", 
+            min_value=round(water_selling_price * 0.7, 5),  # Set precise minimum
+            max_value=round(water_selling_price * 1.3, 5),  # Set precise maximum
+            value=round(water_selling_price, 5),  # Set precise initial value
+            step=0.0001,
+            format="%.5f"  # Display up to 5 decimal places
+        )
+    st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)  # Add horizontal line after expander
+
+    calc_capex_data = capex_formulae()
+    calc_opex_data = opex_formulae()
+    calc_electrolyser_data = electrolyser_formulae()
+
+    # Calculate cash flow data with dynamic water price
+    calc_cash_flow_data = cash_flow_formulae(water_price)
+
+    # Display Default Data
+    display_default_data(capex_data, opex_data, electrolyser_data, cash_flow_data, pretreat_data)
+
+    # Display Calculated Data
+    display_calculated_data(calc_capex_data, calc_opex_data, calc_electrolyser_data, calc_cash_flow_data)
+
+    # Add a horizontal line before the Discounted Cash Flow section
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.header("Discounted Cash Flow Analysis")
+
+    # Run the discounted cash flow analysis with dynamic discount, tax rates, and water price
     try:
-        dcf_result = discounted_cash_flow_analysis(discount_rate, tax_rate)
+        dcf_result = discounted_cash_flow_analysis(discount_rate, tax_rate, water_price)
         st.subheader("Discounted Cash Flow Values ($M)")
         st.dataframe(dcf_result.T)
 
@@ -122,7 +139,7 @@ def main():
         cumulative_npvs = {}
         for rate in discount_rates:
             try:
-                dcf_result = discounted_cash_flow_analysis(rate, tax_rate)  # Pass tax_rate to ensure dynamic updates
+                dcf_result = discounted_cash_flow_analysis(rate, tax_rate, water_price)  # Pass water_price for dynamic updates
                 cumulative_npvs[f"{rate:.2f}%"] = dcf_result['Cumulative NPV']
             except Exception as e:
                 st.error(f"Error calculating DCF at {rate:.2f}% discount rate: {e}")
@@ -158,6 +175,47 @@ def main():
             ]
         )
         st.plotly_chart(fig)
+
+        # Water price sensitivity plot
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.subheader("Sensitivity Analysis: Cumulative NPV vs. Water Price")
+
+        # Vary water price from -30% to +30%
+        water_prices = [water_price * (1 + i * 0.1) for i in range(-3, 4)]
+        npv_last_values = []
+
+        for price in water_prices:
+            try:
+                dcf_result = discounted_cash_flow_analysis(discount_rate, tax_rate, price)
+                npv_last_values.append(dcf_result['Cumulative NPV'].iloc[-1])  # Last year cumulative NPV
+            except Exception as e:
+                st.error(f"Error calculating DCF at water price {price}: {e}")
+                continue
+
+        # Plot NPV last values vs. Water Price
+        fig_water_price = go.Figure(data=go.Scatter(
+            x=water_prices,
+            y=npv_last_values,
+            mode='lines+markers'
+        ))
+        fig_water_price.update_layout(
+            title="Sensitivity of NPV to Water Selling Price",
+            xaxis_title="Water Selling Price ($/Gal)",
+            yaxis_title="Cumulative NPV ($M)",
+            template="plotly_white",
+            shapes=[
+                dict(
+                    type="line",
+                    xref="paper",  # Make the line span the entire plot width
+                    x0=0,  # Start at the left edge of the plot
+                    x1=1,  # End at the right edge of the plot
+                    y0=0,
+                    y1=0,
+                    line=dict(color="yellow", width=3)
+                )
+            ]
+        )
+        st.plotly_chart(fig_water_price)
 
     except Exception as e:
         st.error(f"Error calculating Discounted Cash Flow Analysis: {e}")
