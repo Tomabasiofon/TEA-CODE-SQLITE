@@ -15,7 +15,7 @@ from capex_calc import capex_formulae
 from opex_calc import opex_formulae
 from cash_flow_calc import cash_flow_formulae
 
-def discounted_cash_flow_analysis(discount_rate, tax_rate):
+def discounted_cash_flow_analysis(discount_rate, tax_rate, water_selling_price):
     """
     Performs a discounted cash flow (DCF) analysis to assess the profitability of a project
     over its lifespan by considering revenue, costs, taxes, and discounting cash flows.
@@ -23,6 +23,7 @@ def discounted_cash_flow_analysis(discount_rate, tax_rate):
     Parameters:
         discount_rate (float): The discount rate to apply for NPV calculations.
         tax_rate (float): The tax rate to apply for tax calculations.
+        water_selling_price (float): The price of water to be varied for sensitivity analysis.
 
     Returns:
         pd.DataFrame: A DataFrame containing calculated DCF values, including NPV and cumulative NPV.
@@ -38,7 +39,7 @@ def discounted_cash_flow_analysis(discount_rate, tax_rate):
         total_revenue,
         water_revenue,
         ammonia_revenue
-    ) = cash_flow_formulae()
+    ) = cash_flow_formulae(water_selling_price)
 
     # Retrieve the operating expense (opex) from opex_calc module
     (
@@ -144,8 +145,9 @@ def discounted_cash_flow_analysis(discount_rate, tax_rate):
 
 
 if __name__ == "__main__":
-    # Example usage: Run DCF analysis with a specified discount rate and tax rate
+    # Example usage: Run DCF analysis with a specified discount rate, tax rate, and water selling price
     discount_rate = 5.0  # Example value
     tax_rate = 20.0  # Example value
-    dcf_result = discounted_cash_flow_analysis(discount_rate, tax_rate)
+    water_selling_price = 0.00679  # Example value for water price
+    dcf_result = discounted_cash_flow_analysis(discount_rate, tax_rate, water_selling_price)
     print(dcf_result)
