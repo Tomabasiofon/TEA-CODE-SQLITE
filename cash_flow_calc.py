@@ -6,13 +6,21 @@ from input.electrolyser_input import get_electrolyser_data
 from input.pretreat import get_pretreat_equipment_cost_data
 from capex_calc import capex_formulae
 
-
-
-def cash_flow_formulae():
+def cash_flow_formulae(water_selling_price):
     """
     This function contains all formulae for computing additional inputs to the TEA model.
-    It first reads all the variables needed for additional computauion.
-    Note that this computations will be done in python, rather than excel since the user will be provided with the flexibility to manipulate the values.
+    It first reads all the variables needed for additional computation.
+    Note that this computation will be done in Python, rather than Excel since the user will be provided 
+    with the flexibility to manipulate the values.
+
+    Parameters:
+    ----------
+    water_selling_price (float): The price of water, which can be varied for sensitivity analysis.
+
+    Returns:
+    -------
+    tuple
+        A tuple containing the calculated financial values needed for DCF analysis.
     """
     # Call the function to retrieve the additional data needed for computation (capex, cash flow, raw data and calculated data)
     pretreat_pec = get_pretreat_equipment_cost_data()
@@ -31,7 +39,7 @@ def cash_flow_formulae():
         tax_rate,
         discount_rate,
         water_cost_price,
-        water_selling_price,
+        _,
         ammonia_selling_price,
         chemical_selling_price,
         depreciation_time,
@@ -92,17 +100,18 @@ def cash_flow_formulae():
         separation_cost
     ) = get_electrolyser_data()
 
-    land_cost = (land * fixed_capital_investment)/100
+    # Calculate financial metrics based on provided and retrieved values
+    land_cost = (land * fixed_capital_investment) / 100
     total_capital_investment = fixed_capital_investment + land_cost + working_capital_total
-    depreciation = total_capital_cost/depreciation_time
+    depreciation = total_capital_cost / depreciation_time
     total_pec = pretreat_pec + electrolyser_pec
+
+    # Calculate revenue based on the dynamic water_selling_price parameter
     water_revenue = water_selling_price * treated_water_quantity * capacity_factor
-    ammonia_revenue = ammonia_selling_price * (capacity/time) * capacity_factor
+    ammonia_revenue = ammonia_selling_price * (capacity / time) * capacity_factor
     total_revenue = water_revenue + ammonia_revenue
 
-    print('land cost---------------------------------------', land_cost)
-    
-    
+    # Return the calculated financial metrics
     return (
         round(land_cost, 2),
         round(total_capital_investment, 2),
@@ -114,7 +123,7 @@ def cash_flow_formulae():
         round(ammonia_revenue)
     )
 
-
-
 if __name__ == "__main__":
-    cash_flow_formulae()
+    # Example usage of the modified function with a sample water selling price
+    water_selling_price = 1.0  # Example value
+    print(cash_flow_formulae(water_selling_price))
